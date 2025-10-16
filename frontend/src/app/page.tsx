@@ -16,6 +16,14 @@ export default function Home() {
     meetingAudio: []
   });
 
+  const [uploadedFilePaths, setUploadedFilePaths] = useState<{
+    businessPlan: string[];
+    meetingAudio: string[];
+  }>({
+    businessPlan: [],
+    meetingAudio: []
+  });
+
   const [mentorInput, setMentorInput] = useState<MentorInputType>({
     growth: '',
     kpi: '',
@@ -25,17 +33,43 @@ export default function Home() {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const handleFileUpload = (files: File[], type: 'business-plan' | 'meeting-audio') => {
-    if (type === 'business-plan') {
-      setUploadedFiles(prev => ({
-        ...prev,
-        businessPlan: [...prev.businessPlan, ...files]
-      }));
-    } else {
-      setUploadedFiles(prev => ({
-        ...prev,
-        meetingAudio: [...prev.meetingAudio, ...files]
-      }));
+  const handleFileUpload = async (files: File[], type: 'business-plan' | 'meeting-audio') => {
+    try {
+      const { uploadBusinessPlan, uploadMeetingAudio } = await import('@/lib/api');
+      const uploadedPaths: string[] = [];
+      
+      for (const file of files) {
+        let uploadedFile;
+        if (type === 'business-plan') {
+          uploadedFile = await uploadBusinessPlan(file);
+        } else {
+          uploadedFile = await uploadMeetingAudio(file);
+        }
+        uploadedPaths.push(uploadedFile.file_path);
+      }
+      
+      if (type === 'business-plan') {
+        setUploadedFiles(prev => ({
+          ...prev,
+          businessPlan: [...prev.businessPlan, ...files]
+        }));
+        setUploadedFilePaths(prev => ({
+          ...prev,
+          businessPlan: [...prev.businessPlan, ...uploadedPaths]
+        }));
+      } else {
+        setUploadedFiles(prev => ({
+          ...prev,
+          meetingAudio: [...prev.meetingAudio, ...files]
+        }));
+        setUploadedFilePaths(prev => ({
+          ...prev,
+          meetingAudio: [...prev.meetingAudio, ...uploadedPaths]
+        }));
+      }
+    } catch (error) {
+      console.error('파일 업로드 오류:', error);
+      alert('파일 업로드 중 오류가 발생했습니다.');
     }
   };
 
@@ -45,8 +79,16 @@ export default function Home() {
         ...prev,
         businessPlan: prev.businessPlan.filter((_, i) => i !== index)
       }));
+      setUploadedFilePaths(prev => ({
+        ...prev,
+        businessPlan: prev.businessPlan.filter((_, i) => i !== index)
+      }));
     } else {
       setUploadedFiles(prev => ({
+        ...prev,
+        meetingAudio: prev.meetingAudio.filter((_, i) => i !== index)
+      }));
+      setUploadedFilePaths(prev => ({
         ...prev,
         meetingAudio: prev.meetingAudio.filter((_, i) => i !== index)
       }));
@@ -62,8 +104,8 @@ export default function Home() {
       
       const request = {
         mentor_input: mentorInput,
-        business_plan_files: uploadedFiles.businessPlan.map(f => f.name),
-        meeting_audio_files: uploadedFiles.meetingAudio.map(f => f.name)
+        business_plan_files: uploadedFilePaths.businessPlan,
+        meeting_audio_files: uploadedFilePaths.meetingAudio
       };
       
       const results = await analyzeDocuments(request);
@@ -79,7 +121,6 @@ export default function Home() {
           growth: `API 연결 오류: ${error}`,
           kpi: `API 연결 오류: ${error}`,
           strategy: `API 연결 오류: ${error}`,
-          management: `API 연결 오류: ${error}`
         }
       });
     } finally {
