@@ -1,9 +1,7 @@
 import axios from 'axios';
 import { AnalysisRequest, AnalysisResponse, UploadedFile } from '@/types';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api' 
-  : 'http://localhost:8002';
+const API_BASE_URL = 'http://localhost:8002';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

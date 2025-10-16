@@ -23,51 +23,17 @@ async def analyze_business_plan(file_paths: list, upload_dir: str) -> str:
             print(f"파일 처리 오류 {file_path}: {e}")
             extracted_text += f"\n\n=== 파일: {file_path} ===\n파일 처리 중 오류 발생: {str(e)}"
     
-    # 청크 단위로 나누어 요약 후 병합
-    # 텍스트를 청크로 나누기 (각 청크는 약 1000자)
-    chunk_size = 1000
-    chunks = []
-    for i in range(0, len(extracted_text), chunk_size):
-        chunk = extracted_text[i:i + chunk_size]
-        chunks.append(chunk)
-    
-    print(f"📄 사업계획서 텍스트를 {len(chunks)}개 청크로 분할")
-    
-    # 각 청크를 개별적으로 요약
-    chunk_summaries = []
-    for i, chunk in enumerate(chunks):
-        print(f"🔄 사업계획서 청크 {i+1}/{len(chunks)} 요약 중...")
-        
-        chunk_prompt = f"""
-        다음은 사업계획서에서 추출된 텍스트의 일부입니다.
-        이 청크에서 Station C 진단보고서에 필요한 핵심 정보를 추출하여 간단히 요약해주세요. 마크다운은 제외해주세요.
-        
-        텍스트 청크:
-        {chunk}
-        
-        다음 형식으로 핵심 내용만 요약해주세요:
-        - 기업 정보: [기업명, 업종, 설립년도, 대표자 등]
-        - 제품/서비스: [주요 제품/서비스 내용]
-        - 시장 정보: [타겟 시장, 시장 규모, 경쟁사 등]
-        - 비즈니스 모델: [수익 모델, 사업 방식]
-        - 재무 정보: [매출, 투자, 사업비 등 구체적 숫자]
-        - 기타 중요 정보: [기타 핵심 내용]
-        """
-        
-        chunk_summary = await call_gpt(chunk_prompt)
-        chunk_summaries.append(f"=== 청크 {i+1} 요약 ===\n{chunk_summary}\n")
-    
-    # 모든 청크 요약을 병합하여 최종 분석
-    combined_summaries = "\n\n".join(chunk_summaries)
+    # GPT-5로 직접 전체 텍스트 분석 (청크 처리 제거)
+    print(f"📄 사업계획서 텍스트 길이: {len(extracted_text)}자")
     
     final_prompt = f"""
-    다음은 사업계획서 파일들을 청크 단위로 나누어 각각 요약한 결과입니다.
-    이 요약들을 종합하여 Station C 진단보고서에 필요한 최종 사업계획서 분석을 작성해주세요. 마크다운은 제외해주세요.
+    다음은 사업계획서에서 추출된 전체 텍스트입니다.
+    이 텍스트를 분석하여 Station C 진단보고서에 필요한 핵심 정보를 추출해주세요. 마크다운은 제외해주세요.
     
-    청크별 요약 결과:
-    {combined_summaries}
+    사업계획서 텍스트:
+    {extracted_text}
     
-    위 요약들을 종합하여 다음 형식으로 최종 정리해주세요. 마크다운 문법을 사용하지 말고 일반 텍스트로 작성해주세요:
+    다음 형식으로 핵심 내용을 정리해주세요. 마크다운 문법을 사용하지 말고 일반 텍스트로 작성해주세요:
     
     ■ 기업 개요
     • 기업명: [텍스트에서 찾은 기업명, 브랜드명, 사업체명]
