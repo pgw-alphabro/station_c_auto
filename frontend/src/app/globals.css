@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;600;700&display=swap');
+
+body {
+  font-family: 'Lato', 'Helvetica Neue', Arial, sans-serif;
+  background: #f9f7f4;
+  color: #382110;
+}
+
+.upload-area {
+  @apply border-2 border-dashed border-gray-400 rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 hover:border-blue-500 hover:bg-gray-50;
+}
+
+.upload-area.dragover {
+  @apply border-green-500 bg-green-50;
+}
+
+.btn {
+  @apply bg-primary-500 text-white border-none px-6 py-3 rounded cursor-pointer font-semibold transition-all duration-300 hover:bg-primary-600 hover:-translate-y-0.5 hover:shadow-md;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700;
+}
+
+.btn-success {
+  @apply bg-primary-500 hover:bg-primary-600;
+}
+
+.tab {
+  @apply flex-1 p-3 bg-gray-200 border-none cursor-pointer font-semibold transition-all duration-300;
+}
+
+.tab.active {
+  @apply bg-primary-500 text-white;
+}
+
+.status-icon {
+  @apply w-5 h-5 rounded-full flex items-center justify-center text-xs;
+}
+
+.status-pending {
+  @apply bg-yellow-500 text-white;
+}
+
+.status-processing {
+  @apply bg-blue-500 text-white;
+}
+
+.status-complete {
+  @apply bg-green-500 text-white;
+}
+
+.mentor-input-section {
+  @apply bg-orange-50 border-2 border-orange-400 rounded-xl p-5 my-5;
+}
+
+.mentor-textarea {
+  @apply w-full min-h-36 p-4 border border-gray-300 rounded-lg text-base resize-y mt-2 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100;
+}

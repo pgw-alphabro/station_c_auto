@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station C 2025 진단보고서 자동생성 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Lato', 'Helvetica Neue', Arial, sans-serif;
+            background: #f9f7f4;
+            min-height: 100vh;
+            padding: 20px;
+            color: #382110;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+
+        .header {
+            background: #382110;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 80vh;
+        }
+
+        .upload-section {
+            background: #faf8f5;
+            padding: 40px;
+            border-right: 1px solid #e6e6e6;
+        }
+
+        .analysis-section {
+            background: white;
+            padding: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #382110;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e6e6e6;
+            padding-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-area {
+            border: 3px dashed #bdc3c7;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #3498db;
+            background: #f8f9fa;
+        }
+
+        .upload-area.dragover {
+            border-color: #2ecc71;
+            background: #d5f4e6;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border: 1px solid #e9ecef;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .file-size {
+            font-size: 0.8em;
+            color: #95a5a6;
+        }
+
+        .btn {
+            background: #00635d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #004d47;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn-danger {
+            background: #d32f2f;
+        }
+
+        .btn-success {
+            background: #00635d;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        .analysis-status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+        }
+
+        .status-pending {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-processing {
+            background: #3498db;
+            color: white;
+        }
+
+        .status-complete {
+            background: #27ae60;
+            color: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-info {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .progress-text {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .extracted-content {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .content-section {
+            margin-bottom: 25px;
+        }
+
+        .content-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .content-text {
+            font-size: 1em;
+            line-height: 1.8;
+            color: #34495e;
+            white-space: pre-line;
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: #e9ecef;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #00635d;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .report-output {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            font-size: 1em;
+            line-height: 1.8;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-line;
+        }
+
+        .copy-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .copy-btn:hover {
+            background: #229954;
+        }
+
+        .ai-analysis-box {
+            background: #382110;
+            color: white;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .ai-analysis-box h3 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mentor-input-section {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .mentor-input-section h3 {
+            color: #e65100;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .mentor-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            resize: vertical;
+            margin-top: 10px;
+        }
+
+        .mentor-textarea:focus {
+            outline: none;
+            border-color: #ff9800;
+            box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.1);
+        }
+
+        .input-label {
+            font-weight: 600;
+            color: #5d4037;
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .upload-section {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Station C 2025 AI 진단보고서</h1>
+            <p>AI 기반 자동 진단보고서 생성 시스템 (데모 버전)</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <h2 class="section-title">파일 업로드</h2>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchUploadTab('business-plan')">사업계획서</button>
+                    <button class="tab" onclick="switchUploadTab('meeting-audio')">미팅 오디오</button>
+                </div>
+
+                <div class="tab-content active" id="business-plan-tab">
+                    <div class="upload-area" id="businessPlanUpload" onclick="triggerFileUpload('businessPlan')">
+                        <div class="upload-text">
+                            <strong>사업계획서를 업로드하세요</strong><br>
+                            PDF, Word, PowerPoint 파일 지원<br>
+                            <small>클릭하거나 파일을 드래그해주세요</small>
+                        </div>
+                    </div>
+                    <input type="file" id="businessPlanInput" accept=".pdf,.doc,.docx,.ppt,.pptx" style="display: none;" multiple>
+                    <div id="businessPlanFiles" class="file-list"></div>
+                </div>
+
+                <div class="tab-content" id="meeting-audio-tab">
+                    <div class="upload-area" id="meetingAudioUpload" onclick="triggerFileUpload('meetingAudio')">
+                        <div class="upload-text">
+                            <strong>미팅 오디오를 업로드하세요</strong><br>
+                            MP3, WAV, M4A 파일 지원<br>
+                            <small>클릭하거나 파일을 드래그해주세요</small>
+                        </div>
+                    </div>
+                    <input type="file" id="meetingAudioInput" accept=".mp3,.wav,.m4a,.mp4" style="display: none;" multiple>
+                    <div id="meetingAudioFiles" class="file-list"></div>
+                </div>
+
+                <div class="mentor-input-section">
+                    <h3>📝 멘토 의견 입력</h3>
+                    <p style="color: #5d4037; margin-bottom: 15px;">미팅 중 작성한 멘토 의견을 각 영역별로 입력해주세요.</p>
+                    
+                    <label class="input-label">1. 성장단계 관련 의견</label>
+                    <textarea id="mentorGrowthInput" class="mentor-textarea" placeholder="예: 현재 MVP 완료 단계이며, 베타 테스터 확보 상태를 고려할 때 PMF 단계가 적합합니다. 다만 의료기관 파트너십 확대가 필요합니다."></textarea>
+                    
+                    <label class="input-label">2. KPI 관련 의견</label>
+                    <textarea id="mentorKpiInput" class="mentor-textarea" placeholder="예: PSF 설문조사 목표를 100명에서 200명으로 상향 조정이 필요합니다. MAU 목표도 15,000명으로 조정하는 것이 현실적입니다."></textarea>
+                    
+                    <label class="input-label">3. 전략 관련 의견</label>
+                    <textarea id="mentorStrategyInput" class="mentor-textarea" placeholder="예: 의료기관 파트너십 확대 전략이 효과적입니다. 다만 데이터 보안 강화에 더 많은 예산 배정이 필요합니다."></textarea>
+                    
+                    <label class="input-label">4. 경영진단 관련 의견</label>
+                    <textarea id="mentorManagementInput" class="mentor-textarea" placeholder="예: 팀의 의료 AI 전문성은 우수하나, 규제 대응 역량 강화가 필요합니다. Station C 헬스케어 특화 멘토링이 큰 도움이 될 것입니다."></textarea>
+                </div>
+
+                <div class="analysis-status">
+                    <h3>분석 진행상황</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-info">
+                        <div class="progress-text">
+                            <span id="progressText">분석 준비 중...</span>
+                        </div>
+                    </div>
+                    <div id="statusList">
+                        <div class="status-item">
+                            <div class="status-icon status-pending" id="status-upload">⏳</div>
+                            <span>파일 업로드 대기중</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-icon status-pending" id="status-extract">⏳</div>
+                            <span>내용 추출 대기중</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-icon status-pending" id="status-analyze">⏳</div>
+                            <span>AI 분석 대기중</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-icon status-pending" id="status-generate">⏳</div>
+                            <span>보고서 생성 대기중</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-success" id="analyzeBtn" onclick="startAnalysis()">
+                    AI 분석 시작 (데모)
+                </button>
+            </div>
+
+            <div class="analysis-section">
+                <h2 class="section-title">분석 결과</h2>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="switchAnalysisTab('extracted')">추출된 정보</button>
+                    <button class="tab" onclick="switchAnalysisTab('report')">생성된 보고서</button>
+                </div>
+
+                <div class="tab-content active" id="extracted-tab">
+                    <div class="ai-analysis-box">
+                        <h3>AI 추출 정보</h3>
+                        <p>업로드된 파일들에서 AI가 자동으로 추출한 핵심 정보입니다.</p>
+                    </div>
+
+                    <div class="extracted-content">
+                        <div class="content-section">
+                            <div class="content-title">사업계획서 요약</div>
+                            <div class="content-text" id="businessPlanSummary">
+                                사업계획서를 업로드하면 AI가 자동으로 핵심 내용을 추출합니다.
+                            </div>
+                        </div>
+
+                        <div class="content-section">
+                            <div class="content-title">미팅 핵심 내용</div>
+                            <div class="content-text" id="meetingSummary">
+                                미팅 오디오를 업로드하면 AI가 자동으로 음성을 텍스트로 변환하고 핵심 내용을 추출합니다.
+                            </div>
+                        </div>
+
+                        <div class="content-section">
+                            <div class="content-title">추출된 KPI</div>
+                            <div class="content-text" id="extractedKPIs">
+                                문서와 미팅에서 언급된 핵심성과지표들이 여기에 표시됩니다.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="report-tab">
+                    <div class="ai-analysis-box">
+                        <h3>자동생성 보고서</h3>
+                        <p>Station C 양식에 맞게 자동으로 생성된 진단보고서입니다.</p>
+                    </div>
+
+                    <div class="tabs" style="margin-top: 20px;">
+                        <button class="tab active" onclick="switchReportTab('growth')">성장단계</button>
+                        <button class="tab" onclick="switchReportTab('kpi')">KPI</button>
+                        <button class="tab" onclick="switchReportTab('strategy')">전략</button>
+                        <button class="tab" onclick="switchReportTab('budget')">사업비</button>
+                        <button class="tab" onclick="switchReportTab('management')">경영진단</button>
+                    </div>
+
+                    <div class="tab-content active" id="growth-report">
+                        <div class="report-output" id="growthReportOutput">
+                            AI 분석을 시작하면 성장단계 진단 내용이 자동으로 생성됩니다.
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('growthReportOutput')">복사</button>
+                    </div>
+
+                    <div class="tab-content" id="kpi-report">
+                        <div class="report-output" id="kpiReportOutput">
+                            AI 분석을 시작하면 KPI 관련 내용이 자동으로 생성됩니다.
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('kpiReportOutput')">복사</button>
+                    </div>
+
+                    <div class="tab-content" id="strategy-report">
+                        <div class="report-output" id="strategyReportOutput">
+                            AI 분석을 시작하면 전략 관련 내용이 자동으로 생성됩니다.
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('strategyReportOutput')">복사</button>
+                    </div>
+
+                    <div class="tab-content" id="budget-report">
+                        <div class="report-output" id="budgetReportOutput">
+                            AI 분석을 시작하면 사업비 사용 계획이 자동으로 생성됩니다.
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('budgetReportOutput')">복사</button>
+                    </div>
+
+                    <div class="tab-content" id="management-report">
+                        <div class="report-output" id="managementReportOutput">
+                            AI 분석을 시작하면 경영진단 내용이 자동으로 생성됩니다.
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('managementReportOutput')">복사</button>
+                    </div>
+
+                    <button class="btn btn-success" onclick="exportFullReport()" style="width: 100%; margin-top: 20px;">
+                        전체 보고서 다운로드
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFiles = {
+            businessPlan: [],
+            meetingAudio: []
+        };
+
+        let analysisResults = {
+            businessPlanSummary: '',
+            meetingSummary: '',
+            extractedKPIs: '',
+            reports: {
+                growth: '',
+                kpi: '',
+                strategy: '',
+                budget: '',
+                management: ''
+            }
+        };
+
+
+        let mentorOpinions = {
+            growth: '',
+            kpi: '',
+            strategy: '',
+            management: ''
+        };
+
+        function setupFileUploads() {
+            setupDragAndDrop('businessPlanUpload', 'businessPlanInput');
+            setupDragAndDrop('meetingAudioUpload', 'meetingAudioInput');
+
+            document.getElementById('businessPlanInput').addEventListener('change', (e) => {
+                handleFileSelect(e, 'businessPlan');
+            });
+
+            document.getElementById('meetingAudioInput').addEventListener('change', (e) => {
+                handleFileSelect(e, 'meetingAudio');
+            });
+        }
+
+        function setupDragAndDrop(uploadAreaId, inputId) {
+            const uploadArea = document.getElementById(uploadAreaId);
+            const input = document.getElementById(inputId);
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.add('dragover'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('dragover'), false);
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                input.files = files;
+                handleFileSelect({ target: input }, uploadAreaId.includes('businessPlan') ? 'businessPlan' : 'meetingAudio');
+            }, false);
+        }
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function triggerFileUpload(type) {
+            document.getElementById(type + 'Input').click();
+        }
+
+        async function handleFileSelect(event, type) {
+            const files = Array.from(event.target.files);
+            
+            // 파일을 서버에 업로드
+            for (const file of files) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    const uploadType = type === 'businessPlan' ? 'business-plan' : 'meeting-audio';
+                    const response = await fetch(`http://localhost:8002/upload/${uploadType}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        uploadedFiles[type] = [...uploadedFiles[type], {
+                            name: result.filename,
+                            file_path: result.file_path,
+                            originalFile: file
+                        }];
+                    } else {
+                        console.error('파일 업로드 실패:', file.name);
+                    }
+                } catch (error) {
+                    console.error('파일 업로드 오류:', error);
+                }
+            }
+            
+            displayFiles(type);
+            updateStatus('upload', 'complete');
+        }
+
+        function displayFiles(type) {
+            const container = document.getElementById(type + 'Files');
+            container.innerHTML = '';
+
+            uploadedFiles[type].forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                const typeIcon = getFileTypeIcon(file.name);
+                const fileSize = formatFileSize(file.size);
+
+                fileItem.innerHTML = `
+                    <div class="file-info">
+                        <div style="font-size: 1.5em;">${typeIcon}</div>
+                        <div class="file-details">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${fileSize}</div>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="btn btn-danger btn-sm" onclick="removeFile('${type}', ${index})">삭제</button>
+                    </div>
+                `;
+                container.appendChild(fileItem);
+            });
+        }
+
+        function getFileTypeIcon(filename) {
+            const extension = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': '📄', 'doc': '📝', 'docx': '📝',
+                'ppt': '📊', 'pptx': '📊',
+                'mp3': '🎵', 'wav': '🎵', 'm4a': '🎵', 'mp4': '🎬'
+            };
+            return icons[extension] || '📎';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function removeFile(type, index) {
+            uploadedFiles[type].splice(index, 1);
+            displayFiles(type);
+        }
+
+        function switchUploadTab(tabName) {
+            document.querySelectorAll('.upload-section .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.upload-section .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        function switchAnalysisTab(tabName) {
+            document.querySelectorAll('.analysis-section > .tabs .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.analysis-section > .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        function switchReportTab(tabName) {
+            document.querySelectorAll('#report-tab .tabs .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            document.querySelectorAll('#report-tab .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-report').classList.add('active');
+        }
+
+        async function startAnalysis() {
+            // 멘토 의견 수집
+            mentorOpinions.growth = document.getElementById('mentorGrowthInput').value;
+            mentorOpinions.kpi = document.getElementById('mentorKpiInput').value;
+            mentorOpinions.strategy = document.getElementById('mentorStrategyInput').value;
+            mentorOpinions.management = document.getElementById('mentorManagementInput').value;
+
+            // 진행 상황 초기화
+            updateProgressText('분석을 시작합니다...');
+
+            updateStatus('extract', 'processing');
+            updateProgress(20);
+
+            try {
+                // 실제 API 호출
+                updateProgressText('서버에 분석 요청을 전송 중...');
+                updateProgress(30);
+                
+                const request = {
+                    mentor_input: mentorOpinions,
+                    business_plan_files: uploadedFiles.businessPlan.map(f => f.file_path),
+                    meeting_audio_files: uploadedFiles.meetingAudio.map(f => f.file_path)
+                };
+
+                updateProgressText('사업계획서 OCR 처리 중...');
+                updateProgress(40);
+
+                const response = await fetch('http://localhost:8002/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(request)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // API 호출 완료 후 단계별 진행 상황 표시
+                updateProgressText('미팅 오디오 STT 처리 중...');
+                updateProgress(50);
+                
+                // STT 처리 시간을 고려한 대기 (오디오 파일이 있을 때만)
+                if (uploadedFiles.meetingAudio.length > 0) {
+                    await sleep(3000); // STT는 시간이 오래 걸림
+                } else {
+                    await sleep(1000);
+                }
+                
+                updateProgressText('AI 분석 및 보고서 생성 중...');
+                updateProgress(70);
+                
+                // GPT 분석 시간을 고려한 대기
+                await sleep(3000);
+                
+                updateProgressText('분석 결과를 처리 중...');
+                updateProgress(80);
+
+                const results = await response.json();
+                
+                updateProgressText('진단보고서를 생성 중...');
+                updateProgress(90);
+                
+                // 결과 처리 시간을 고려한 대기
+                await sleep(1500);
+                
+                updateProgressText('최종 보고서를 정리 중...');
+                updateProgress(95);
+                
+                await sleep(1000);
+                
+                // 결과를 화면에 표시
+                analysisResults.businessPlanSummary = results.business_plan_summary;
+                analysisResults.meetingSummary = results.meeting_summary;
+                analysisResults.extractedKPIs = results.extracted_kpis;
+                analysisResults.reports = results.reports;
+
+                document.getElementById('businessPlanSummary').textContent = results.business_plan_summary;
+                document.getElementById('meetingSummary').textContent = results.meeting_summary;
+                document.getElementById('extractedKPIs').textContent = results.extracted_kpis;
+                document.getElementById('growthReportOutput').textContent = results.reports.growth;
+                document.getElementById('kpiReportOutput').textContent = results.reports.kpi;
+                document.getElementById('strategyReportOutput').textContent = results.reports.strategy;
+                document.getElementById('managementReportOutput').textContent = results.reports.management;
+                document.getElementById('budgetReportOutput').textContent = results.reports.budget;
+
+                updateStatus('extract', 'complete');
+                updateStatus('analyze', 'complete');
+            updateStatus('generate', 'complete');
+            updateProgress(100);
+                
+                updateProgressText('분석이 완료되었습니다!');
+
+            } catch (error) {
+                console.error('분석 중 오류 발생:', error);
+                
+                // 오류 발생 시 에러 메시지 표시
+                const errorMessage = `API 연결 오류: ${error.message}`;
+                analysisResults.businessPlanSummary = errorMessage;
+                analysisResults.meetingSummary = errorMessage;
+                analysisResults.extractedKPIs = errorMessage;
+                analysisResults.reports = {
+                    growth: errorMessage,
+                    kpi: errorMessage,
+                    strategy: errorMessage,
+                    management: errorMessage,
+                    budget: errorMessage
+                };
+
+                document.getElementById('businessPlanSummary').textContent = errorMessage;
+                document.getElementById('meetingSummary').textContent = errorMessage;
+                document.getElementById('extractedKPIs').textContent = errorMessage;
+                document.getElementById('growthReportOutput').textContent = errorMessage;
+                document.getElementById('kpiReportOutput').textContent = errorMessage;
+                document.getElementById('strategyReportOutput').textContent = errorMessage;
+                document.getElementById('managementReportOutput').textContent = errorMessage;
+                document.getElementById('budgetReportOutput').textContent = errorMessage;
+
+                updateStatus('extract', 'complete');
+                updateStatus('analyze', 'complete');
+            updateStatus('generate', 'complete');
+            updateProgress(100);
+            }
+        }
+
+        async function simulateBusinessPlanAnalysis() {
+            await sleep(2000);
+
+            // 실제 API 호출로 사업계획서 분석
+            try {
+                const response = await fetch('http://localhost:8002/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        business_plan_files: uploadedFiles.businessPlan,
+                        meeting_audio_files: uploadedFiles.meetingAudio,
+                        mentor_input: {
+                            growth: document.getElementById('mentorGrowth').value,
+                            kpi: document.getElementById('mentorKPI').value,
+                            strategy: document.getElementById('mentorStrategy').value,
+                            management: document.getElementById('mentorManagement').value
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    analysisResults.businessPlanSummary = result.business_plan_summary;
+                    document.getElementById('businessPlanSummary').textContent = result.business_plan_summary;
+                } else {
+                    throw new Error('API 호출 실패');
+                }
+            } catch (error) {
+                console.error('사업계획서 분석 오류:', error);
+                const errorMessage = '사업계획서 분석 중 오류가 발생했습니다.';
+                analysisResults.businessPlanSummary = errorMessage;
+                document.getElementById('businessPlanSummary').textContent = errorMessage;
+            }
+        }
+
+        async function simulateMeetingAudioAnalysis() {
+            await sleep(3000);
+            
+            // 실제 API 호출로 미팅 오디오 분석 (STT + GPT)
+            try {
+                const response = await fetch('http://localhost:8002/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        business_plan_files: uploadedFiles.businessPlan,
+                        meeting_audio_files: uploadedFiles.meetingAudio,
+                        mentor_input: {
+                            growth: document.getElementById('mentorGrowth').value,
+                            kpi: document.getElementById('mentorKPI').value,
+                            strategy: document.getElementById('mentorStrategy').value,
+                            management: document.getElementById('mentorManagement').value
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    analysisResults.meetingSummary = result.meeting_summary;
+                    document.getElementById('meetingSummary').textContent = result.meeting_summary;
+                    
+                    analysisResults.extractedKPIs = result.extracted_kpis;
+                    document.getElementById('extractedKPIs').textContent = result.extracted_kpis;
+                } else {
+                    throw new Error('API 호출 실패');
+                }
+            } catch (error) {
+                console.error('미팅 오디오 분석 오류:', error);
+                const errorMessage = '미팅 오디오 분석 중 오류가 발생했습니다.';
+                analysisResults.meetingSummary = errorMessage;
+                document.getElementById('meetingSummary').textContent = errorMessage;
+                
+                analysisResults.extractedKPIs = errorMessage;
+                document.getElementById('extractedKPIs').textContent = errorMessage;
+            }
+        }
+
+        async function generateReports() {
+            await sleep(2000);
+
+            // 실제 API 호출로 보고서 생성
+            try {
+                const response = await fetch('http://localhost:8002/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        business_plan_files: uploadedFiles.businessPlan,
+                        meeting_audio_files: uploadedFiles.meetingAudio,
+                        mentor_input: {
+                            growth: document.getElementById('mentorGrowth').value,
+                            kpi: document.getElementById('mentorKPI').value,
+                            strategy: document.getElementById('mentorStrategy').value,
+                            management: document.getElementById('mentorManagement').value
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // 성장단계 진단 보고서
+                    analysisResults.reports.growth = result.reports.growth;
+                    document.getElementById('growthReportOutput').textContent = result.reports.growth;
+
+            // KPI 보고서
+                    analysisResults.reports.kpi = result.reports.kpi;
+                    document.getElementById('kpiReportOutput').textContent = result.reports.kpi;
+
+            // 전략 보고서
+                    analysisResults.reports.strategy = result.reports.strategy;
+                    document.getElementById('strategyReportOutput').textContent = result.reports.strategy;
+
+            // 경영진단 보고서
+                    analysisResults.reports.management = result.reports.management;
+                    document.getElementById('managementReportOutput').textContent = result.reports.management;
+                    
+                    // 사업비 보고서
+                    analysisResults.reports.budget = result.reports.budget;
+                    document.getElementById('budgetReportOutput').textContent = result.reports.budget;
+                } else {
+                    throw new Error('API 호출 실패');
+                }
+            } catch (error) {
+                console.error('보고서 생성 오류:', error);
+                const errorMessage = '보고서 생성 중 오류가 발생했습니다.';
+                
+                analysisResults.reports.growth = errorMessage;
+                document.getElementById('growthReportOutput').textContent = errorMessage;
+                
+                analysisResults.reports.kpi = errorMessage;
+                document.getElementById('kpiReportOutput').textContent = errorMessage;
+                
+                analysisResults.reports.strategy = errorMessage;
+                document.getElementById('strategyReportOutput').textContent = errorMessage;
+                
+                analysisResults.reports.management = errorMessage;
+                document.getElementById('managementReportOutput').textContent = errorMessage;
+                
+                analysisResults.reports.budget = errorMessage;
+                document.getElementById('budgetReportOutput').textContent = errorMessage;
+            }
+        }
+
+        function updateStatus(step, status) {
+            const statusElement = document.getElementById('status-' + step);
+            statusElement.className = 'status-icon status-' + status;
+            
+            const icons = {
+                'pending': '⏳',
+                'processing': '🔄',
+                'complete': '✅'
+            };
+            
+            statusElement.textContent = icons[status];
+        }
+
+        function updateProgress(percentage) {
+            document.getElementById('progressFill').style.width = percentage + '%';
+        }
+
+        function updateProgressText(text) {
+            document.getElementById('progressText').textContent = text;
+        }
+
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(function() {
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '복사완료';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function exportFullReport() {
+            const currentDate = new Date().toLocaleDateString('ko-KR');
+            
+            let fullReport = `Station C 2025 AI 진단보고서\n`;
+            fullReport += `생성일: ${currentDate}\n`;
+            fullReport += `AI 분석 기반 자동생성 보고서\n`;
+            fullReport += `${'='.repeat(60)}\n\n`;
+            
+            fullReport += `📄 사업계획서 분석 결과\n`;
+            fullReport += `${'-'.repeat(40)}\n`;
+            fullReport += `${analysisResults.businessPlanSummary}\n\n`;
+            
+            fullReport += `🎤 미팅 분석 결과\n`;
+            fullReport += `${'-'.repeat(40)}\n`;
+            fullReport += `${analysisResults.meetingSummary}\n\n`;
+            
+            fullReport += `📊 추출된 KPI\n`;
+            fullReport += `${'-'.repeat(40)}\n`;
+            fullReport += `${analysisResults.extractedKPIs}\n\n`;
+            
+            fullReport += `${'='.repeat(60)}\n`;
+            fullReport += `📋 자동생성 진단보고서\n`;
+            fullReport += `${'='.repeat(60)}\n\n`;
+            
+            fullReport += `${analysisResults.reports.growth}\n\n`;
+            fullReport += `${'-'.repeat(50)}\n\n`;
+            fullReport += `${analysisResults.reports.kpi}\n\n`;
+            fullReport += `${'-'.repeat(50)}\n\n`;
+            fullReport += `${analysisResults.reports.strategy}\n\n`;
+            fullReport += `${'-'.repeat(50)}\n\n`;
+            fullReport += `${analysisResults.reports.budget}\n\n`;
+            fullReport += `${'-'.repeat(50)}\n\n`;
+            fullReport += `${analysisResults.reports.management}\n`;
+            
+            const blob = new Blob([fullReport], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Station_C_AI진단보고서_${currentDate.replace(/\./g, '')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileUploads();
+        });
+    </script>
+</body>
+</html>

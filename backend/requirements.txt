@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-multipart
+openai
+python-dotenv
+aiofiles
+pytesseract
+Pillow
+PyPDF2
+python-docx
+pyhwp
+openai-whisper
